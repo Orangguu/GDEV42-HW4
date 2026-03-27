@@ -7,10 +7,10 @@
 #include "Room.hpp"
 
 int dir[4][2] {
-    {1, 0}, // RIGHT (0)
-    {-1, 0}, // LEFT (1)
-    {0, 1}, // DOWN (3)
-    {0, -1} // UP (4)
+  {1, 0}, // RIGHT (0)
+  {-1, 0}, // LEFT (1)
+  {0, 1}, // DOWN (3)
+  {0, -1} // UP (4)
 };
 
 Map::Map(int width, int height) {
@@ -54,7 +54,8 @@ void Map::GenerateStartRoom() {
   int x = GetRandomValue(0, map_width - 1);
   int y = GetRandomValue(0, map_height - 1);
 
-  Room* new_room = new Room(x, y, START);
+  Room* new_room = new Room(x, y, START, 0);
+  new_room->level_info = level_info;
   CreateRoomInMap(new_room);
 }
 
@@ -73,6 +74,7 @@ void Map::GenerateBetweenRooms() {
             if(IsCellValidRoom(new_x, new_y)) {
                 if(GetRandomValue(0,100) < 50) {
                     Room* new_room = new Room(new_x, new_y, REGULAR, current->distance_from_start + 1);
+                    new_room->level_info = level_info;
                     switch(i) {
                         case 0: new_room->room_neighbors.right = true;
                         case 1: new_room->room_neighbors.left = true;
@@ -154,7 +156,7 @@ void Map::DrawMap() {
         // Color color = GetRoomColor(room->room_type);
         // room->SetRoomColor();
         // room->SetRoomTexture();
-        room->DrawRoom();
+        room->Draw();
         // DrawRectangle(room->x * cell_width, room->y * cell_height, cell_width, cell_height, room->color);
         DrawText(c, room->x *cell_width, room->y * cell_height, 20, WHITE);
     }

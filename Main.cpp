@@ -6,6 +6,7 @@
 #include "Enemy.hpp"
 #include "Camera.hpp"
 #include "Level.hpp"
+#include "Map.hpp"
 
 const float WINDOW_WIDTH = 1280.0f;
 const float WINDOW_HEIGHT = 720.0f;
@@ -20,81 +21,84 @@ int main() {
   InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Ongkiko_Reyes_Warain_Homework02");
   SetTargetFPS(60);
 
-  std::ifstream level_data_file("level1.txt");
+  // create level (level contains info about tileset)
+  // level creates tiles
 
-  if (!level_data_file.is_open()) {
+  std::ifstream tileset_data_file("tileset.txt");
+
+  if (!tileset_data_file.is_open()) {
     std::cerr << "Error opening the file!";
     return 1;
   }
 
-  Level* level = new Level(&level_data_file);
+  Level* level = new Level(&tileset_data_file);
 
-  level_data_file.close();
+  tileset_data_file.close();
   level->print_level_data();
 
-  Vector2 player_position = level->player_position;
+  // create map (map contains info about rooms)
+  // map creates rooms
+
+  Map* map = new Map(MAP_WIDTH, MAP_HEIGHT);
+  map->level_info = level;
+  map->SetUpRooms();
+
+  // create player
+  // get player position from map starting room
+
+  Vector2 player_position = map->player_position;
   float player_size = 40;
   float player_speed = 300;
   int player_health = 50;
-  
+
   Player* player = new Player(player_position, player_size, player_speed, player_health, level);
 
-  std::vector<Enemy*> enemies;
+  // create enemy
+  // get enemy position from map boss room
 
-  for (Vector2 pos : level->enemy_positions) {
-    enemies.push_back(new Enemy(pos, 80, 50, 20, player, level));
-  }
+  Vector2 enemy_position = map->enemy_position;
+  float enemy_size = 80;
+  float enemy_speed = 50;
+  float enemy_health = 20;
 
-  for (Enemy* e : enemies) {
-    e->AddObserver(player);
-    e->AddObserver(e);       // enemy reacts to self events
-    player->AddObserver(e);  // player reacts to enemies (for attacking)
-  }
+  Enemy* enemy = new Enemy(enemy_position, enemy_size, enemy_speed, enemy_health, player, level);
+
+  // create camera
+  // use player as the pivot point
   
   GameCamera* camera = new GameCamera(player, WINDOW_WIDTH, WINDOW_HEIGHT);
 
   while(!WindowShouldClose()) {
     float delta_time = GetFrameTime();
     player->Update(delta_time);
-    for (Enemy* e : enemies) {
-        e->Update(delta_time);
-    }
-    for (int i = enemies.size() - 1; i >= 0; i--) {
-      if (enemies[i]->health <= 0) {
-          delete enemies[i];
-          enemies.erase(enemies.begin() + i);
-      }
+    enemy->Update(delta_time);
+    if (enemy->health <= 0) {
+      delete enemy;
     }
     camera->Update(delta_time);
 
     BeginDrawing();
     BeginMode2D(*(camera->camera_view));
-    level->Draw();
+    map->DrawMap();
+    map->DrawGrid();
     player->Draw();
-    for (Enemy* e : enemies) {
-        e->Draw();
-    }
-
-    for (Enemy* e : enemies) {
-      std::string enemy_hp_text = "HP: " + std::to_string(e->health);
-      DrawText(enemy_hp_text.c_str(), e->position.x - 20, e->position.y - e->size/2 - 20, 15, RED);
-    }
-    
-    EndMode2D();
-
+    enemy->Draw();
+    // add HP text for player
     std::string player_hp_text = "Player HP: " + std::to_string(player->health);
     DrawText(player_hp_text.c_str(), 20, 20, 20, GREEN);
-
-
+    // add HP text for enemy
+    std::string enemy_hp_text = "HP: " + std::to_string(enemy->health);
+    DrawText(enemy_hp_text.c_str(), enemy->position.x - 20, enemy->position.y - enemy->size/2 - 20, 15, RED);
+    EndMode2D();
     EndDrawing();
   }
 
   CloseWindow();
+
   delete player;
+  delete enemy;
   delete level;
   delete camera;
-  for (Enemy* e : enemies)
-      delete e;
-  enemies.clear();
+
   return 0;
 }

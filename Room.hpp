@@ -4,6 +4,7 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <string>
+#include "Level.hpp"
 
 enum RoomType {
   EMPTY = 0,
@@ -20,6 +21,7 @@ struct RoomNeighbors {
   bool right = false;
 };
 
+// there's probably a better way to write all this...!
 struct RoomTextures {
   std::string four_way = "4dir.txt";
   std::string three_way_up = "3dir-up.txt";
@@ -40,18 +42,19 @@ struct RoomTextures {
 
 class Room {
   public:
+    Level* level_info; // pointer to necessary level information
     int x; // in cells
     int y; // in cells
     int distance_from_start; // in cells
     RoomType room_type;
     RoomNeighbors room_neighbors;
     Color room_color;
-    std::string room_texture;
-    Room(int x, int y, RoomType room_type);
+    std::string room_tilemap_file;
+    std::vector<std::vector<int>> room_tilemap;
     Room(int x, int y, RoomType room_type, int distance_from_start);
     void SetRoomColor();
-    void SetRoomTexture();
-    void DrawRoom();
+    void SetRoomTilemap();
+    void Draw();
 };
 
 #endif
